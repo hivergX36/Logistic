@@ -6,7 +6,6 @@ class ClarkandWrite:
         self.CostMatrix = []
         self.Solution = []
         self.Saving = []
-        self.chemin = []
         self.visit = []
         self.cost = 0 
         
@@ -55,17 +54,38 @@ class ClarkandWrite:
         return nbintersection
     
         
- #Vérigier l'intersection à droite où à gauche   
+    #Vérifier l'intersection à droite où à gauche   
+    
+    
     def assigned(self,l1,l2):
         if(l1[0] == l2[0]):
-            l1.insert(0,l2[1])
-        elif(l1[0] == l2[1]):
+            l1.insert(0,l2[-1])
+        elif(l1[0] == l2[-1]):
             l1.insert(0,l2[0])
-        elif(l1[1] == l2[0]):
-            l1.append(l2[1])
-        elif(l1[1] == l2[1]):
+        elif(l1[-1] == l2[0]):
+            l1.append(l2[-1])
+        elif(l1[-1] == l2[-1]):
             l1.append(l2[0])
         return l1
+    
+    
+    
+    def Petalfusion(self):
+        print("petal fusion")
+        nbintersection = 0
+        indlist = []
+        for k in range(len(self.Solution) - 1):
+            for j in range(k,len(self.Solution)):
+                nbintersection = self.intersection(self.Solution[k],self.Solution[j])
+                if nbintersection == 1:
+                    print("petal intersection: ", nbintersection)
+                    indlist.append(j)
+                    self.Solution[k] = self.assigned(self.Solution[k],self.Solution[j])
+        
+        self.Solution = [self.Solution[i] for i in range(len(self.Solution)) if i not in indlist]
+                
+            
+        
 
            
             
@@ -76,33 +96,45 @@ class ClarkandWrite:
         
     def resolve(self):
         nbitersection = 0 
-        listchoice = []
+        count = 0
+        self.Solution = []
         self.saving.sort(key = lambda k: k[0], reverse = True)
-        listchoice.append(self.saving[0][1])
+        self.Solution.append(self.saving[0][1])
         print("saving", self.saving)
-        print("choix", listchoice)
-        for i in range(len(listchoice)):
-            for k in range(len(self.saving)):
-                print("choix", listchoice)
-
-                nbintersection = self.intersection(listchoice[i],self.saving[k][1])
-                print(nbintersection)
+        print("choix", self.Solution)
+        for k in range(len(self.saving)):
+            count = 0 
+            for i in range(len(self.Solution)):
+                count += 1 
+                print("count", count)
+                print("Solution", self.Solution)
+                print("Solution_",i, self.Solution[i])
+                nbintersection = self.intersection(self.Solution[i],self.saving[k][1])
+                print("saving", self.saving[k][1])
+                print("nb intersection", nbintersection)
                 if nbintersection == 1:
-                    listchoice[i] =  self.assigned(listchoice[i],self.saving[k][1])
+                    self.Solution[i] =  self.assigned(self.Solution[i],self.saving[k][1])
+                    print("Un petal est renforce")
+                    break
+                elif nbintersection == 0 and count == len(self.Solution):
+                    self.Solution.append(self.saving[k][1])
+                    print("un nouveau chemin est cree")
+                elif nbintersection == 2:
+                    print("Le chemin existe deja")
+                    break
+            self.Petalfusion()
         
-        
-        print(listchoice)
+        self.Solution = self.Solution[0]
+        print(self.Solution)
                     
             
         
      
         
     def displaySolution(self):
-        
         print("Le chemin est: ")
         print(0, "->", end = " ")
         for i in range(len(self.Solution)):
-            print(self.Solution[i][0][1], "->", end = " ")
-    
+            print(self.Solution[i], "->", end = " ")
         print(0)
         
