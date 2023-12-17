@@ -1,14 +1,11 @@
-from ClarkandWrite import ClarkandWrite
-import random
-import os
+from PackageClarkAlgorithme import * 
 
+print("fileName: ", filename)
 
-fileName = "InstanceNN.txt"
-os.chdir("ClarkandWrite")
-print(os.getcwd()) 
+print(filename)
 
 
 clarkandWrite = ClarkandWrite()
-clarkandWrite.parseMatrix(fileName)
+clarkandWrite.parseMatrix(filename)
 clarkandWrite.resolve()
 clarkandWrite.displaySolution()
