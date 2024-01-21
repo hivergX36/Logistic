@@ -37,9 +37,10 @@ class GraphTSP:
         self.NbVariable = len(tab[0])
         self.CostMatrix = tab
         self.visit = [False for i in range(self.NbVariable)]
-        print("La table est: ", tab)
-        print("La matrice des coût est: ", self.CostMatrix)
+        print("The number of cities is:", self.NbVariable)
+        print("The cost matrix is: ", self.CostMatrix)
         
+    
         
     
         
