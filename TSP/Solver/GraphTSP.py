@@ -32,12 +32,14 @@ class GraphTSP:
         fichier = open(text, "r",encoding="utf8")
         lignes = fichier.readlines()
         print(lignes)
-        tab = [self.Parsechecknumber(lignes,indice) for indice in range(len(lignes))]
+        tab = []
+        for indice in range(len(lignes)):
+            tab.append(self.Parsechecknumber(lignes,indice))
         self.NbEdges = len(tab)
-        self.NbVariable = len(tab[0])
+        self.NbNodes = len(tab[0])
         self.CostMatrix = tab
-        self.visit = [False for i in range(self.NbVariable)]
-        print("The number of cities is:", self.NbVariable)
+        self.visit = [False for i in range(self.NbNodes)]
+        print("The number of cities is:", self.NbNodes)
         print("The cost matrix is: ", self.CostMatrix)
         
     

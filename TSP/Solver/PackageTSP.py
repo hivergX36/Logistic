@@ -21,15 +21,10 @@ filename = os.path.join(currentRepertory, "InstanceTSP.txt")
 Here the function rules to describe our variables and problems sets      
 """
 
-def Nodes(NbVariable):
-    Citylist = ["city_" + str(i) for i in range(NbVariable)]
-    return Citylist
 
 
-def rule_domain_arcs(model, i, j):
-    """ All possible arcs connecting the sites (𝔸) """
-    # only create pair (i, j) if site i and site j are different
-    return (i, j) if i != j else None 
+
+
 
 
 
