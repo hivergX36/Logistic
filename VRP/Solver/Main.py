@@ -88,11 +88,11 @@ TSPmodel.constraint_depot_start = pyo.Constraint(rule = rule_depot_start)
 
 """Number of start to the depot"""
 
-def rule_depot_out(model):
-    return sum(model.x[0,j] for j in model.sites) == NbCar
+def rule_depot_entered(model):
+    return sum(model.x[0,j] for j in model.siteswithoutinitial) == NbCar
 
 
-TSPmodel.constraint_depot_start = pyo.Constraint(rule = rule_depot_out) 
+TSPmodel.constraint_depot_entered = pyo.Constraint(rule = rule_depot_entered) 
 
 
 """Rank constraint"""
