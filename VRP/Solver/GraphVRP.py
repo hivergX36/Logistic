@@ -4,10 +4,13 @@ class GraphVRP:
         self.NbEdges = 0 
         self.NbNodes = 0 
         self.NbCar = 0
+        self.Capacity = 0 
+        self.demand = []
         self.CostMatrix = []
         self.Solution = []
         self.chemin = []
         self.visit = []
+        self.upperbound = []
         
     
     def Parsechecknumber(self,lignes,indice):
@@ -37,11 +40,17 @@ class GraphVRP:
         for indice in range(len(lignes)):
             tab.append(self.Parsechecknumber(lignes,indice))
         self.NbEdges = len(tab) - 1
-        self.NbNodes = len(tab[1])
+        self.NbNodes = len(tab[3])
         self.NbCar = tab[0][0]
-        self.CostMatrix = tab[1:len(tab)]
+        self.Capacity = tab[1][0]
+        self.demand = tab[2]
+        self.CostMatrix = tab[3:len(tab)]
         self.visit = [False for i in range(self.NbNodes)]
+        self.upperbound = [self.Capacity - self.demand[i] for i in range(len(self.demand))]
         print("The number of cities is:", self.NbNodes)
+        print("The capacity of the vehicle fleet is: ", self.Capacity)
+        print("The consummers demand is: ", self.demand)
+        print("The consummers upperbound are: ", self.upperbound)
         print("The cost matrix is: ", self.CostMatrix)
         print("The Number of car is: ", self.NbCar)
         

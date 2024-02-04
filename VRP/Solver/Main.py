@@ -7,23 +7,24 @@ Graph = Gph.GraphVRP()
 Graph.parseMatrix(filename)
 Nbcities = Graph.NbNodes
 NbCar = Graph.NbCar
+Capacity = Graph.Capacity
 
 """Déclaration of our type of model"""
 
-TSPmodel = pyo.ConcreteModel(name = ("TSP"))
+VRPmodel = pyo.ConcreteModel(name = ("TSP"))
 
 """
 The Set of our TSP
 """
-
 
 def Nodes(NbVariable):
     Citylist = [i for i in range(NbVariable)]
     return Citylist
 
 cities = Nodes(Graph.NbNodes)
-TSPmodel.sites =  pyo.Set(initialize=[i for i in range(Graph.NbNodes)], doc="Our cities")
-TSPmodel.siteswithoutinitial = pyo.Set(initialize = (i for i in range(1,Graph.NbNodes)), doc = "Our cities without the depots" )
+VRPmodel.sites =  pyo.Set(initialize=[i for i in range(Graph.NbNodes)], doc="Our cities")
+VRPmodel.siteswithoutinitial = pyo.Set(initialize = (i for i in range(1,Graph.NbNodes)), doc = "Our cities without the depots" )
+VRPmodel.demand = pyo.Set(initialize= [i for i in Graph.demand], doc = "consummer demand")
 """
 The roads of our TSP in our set cities × cities
 """
@@ -34,22 +35,33 @@ def rule_domain_arcs(model, i, j):
     return (i, j) if i != j else None 
 
 
-TSPmodel.valid_arcs = pyo.Set(initialize= ((i,j) for i in range(Graph.NbNodes) for j in range((Graph.NbNodes))), filter= rule_domain_arcs, doc = "Our arcs")
+VRPmodel.valid_arcs = pyo.Set(initialize= ((i,j) for i in range(Graph.NbNodes) for j in range((Graph.NbNodes))), filter= rule_domain_arcs, doc = "Our arcs")
 
 def rule_distance(model, i, j):
     return Graph.CostMatrix[i][j]
 
 """What is the difference between initialize and filter ?"""
-TSPmodel.distance = pyo.Param(TSPmodel.valid_arcs, initialize = rule_distance, doc = "the costs of the arcs of our graph")
+
+VRPmodel.distance = pyo.Param(VRPmodel.valid_arcs, initialize = rule_distance, doc = "the costs of the arcs of our graph")
+
+"""Declaration of demand"""
+
+def rule_demand(model,d):
+    return Graph.demand[d]
+
+VRPmodel.d = pyo.Param(VRPmodel.siteswithoutinitial, initialize = rule_demand, doc = "The demands")
 
 
 """Déclaration of our decision Variables"""
 
-TSPmodel.x = pyo.Var(TSPmodel.valid_arcs,within=pyo.Binary, doc = "whether we choose the arc (i,j) or not")
+VRPmodel.x = pyo.Var(VRPmodel.valid_arcs,within=pyo.Binary, doc = "whether we choose the arc (i,j) or not")
 
 """Variable of MTZ constraint, we use the rank of the cities in order to eliminate the subtours"""
 
-TSPmodel.r = pyo.Var(TSPmodel.siteswithoutinitial, within = pyo.Integers, doc = "Rank of the variable")
+def FcBound(model,i):
+    return (0,Graph.upperbound[i])
+
+VRPmodel.u = pyo.Var(VRPmodel.siteswithoutinitial,bounds=FcBound,  doc = "charge of vehicle after visiting consummer i")
 
 
 """Defitnition of objective function"""
@@ -58,7 +70,7 @@ def obj_function(model):
     return sum(model.x[i,j]*model.distance[i,j] for i in model.sites for j in model.sites if i != j)
 
 
-TSPmodel.objective = pyo.Objective(rule = obj_function,sense = pyo.minimize, doc = "Our objective")
+VRPmodel.objective = pyo.Objective(rule = obj_function,sense = pyo.minimize, doc = "Our objective")
 
 """Definition of our constraints"""
 
@@ -67,14 +79,14 @@ TSPmodel.objective = pyo.Objective(rule = obj_function,sense = pyo.minimize, doc
 def rule_site_entered_once(model,M):
     return sum(model.x[i,M] for i in model.sites if i != M) == 1
 
-TSPmodel.constraint1 = pyo.Constraint(TSPmodel.sites,rule = rule_site_entered_once) 
+VRPmodel.constraint1 = pyo.Constraint(VRPmodel.siteswithoutinitial,rule = rule_site_entered_once) 
 
 """Each site is exited once"""
 
 def rule_site_outed_once(model,N):
     return sum(model.x[N,j] for j in model.sites if j != N) == 1
 
-TSPmodel.constraint2 = pyo.Constraint(TSPmodel.siteswithoutinitial,rule = rule_site_outed_once) 
+VRPmodel.constraint2 = pyo.Constraint(VRPmodel.siteswithoutinitial,rule = rule_site_outed_once) 
 
 
 """Number of depart equals number of arrival"""
@@ -82,7 +94,7 @@ TSPmodel.constraint2 = pyo.Constraint(TSPmodel.siteswithoutinitial,rule = rule_s
 def rule_depot_start(model):
     return sum(model.x[j,0] for j in model.siteswithoutinitial) == NbCar
 
-TSPmodel.constraint_depot_start = pyo.Constraint(rule = rule_depot_start) 
+VRPmodel.constraint_depot_start = pyo.Constraint(rule = rule_depot_start) 
 
 
 
@@ -92,34 +104,34 @@ def rule_depot_entered(model):
     return sum(model.x[0,j] for j in model.siteswithoutinitial) == NbCar
 
 
-TSPmodel.constraint_depot_entered = pyo.Constraint(rule = rule_depot_entered) 
+VRPmodel.constraint_depot_entered = pyo.Constraint(rule = rule_depot_entered) 
 
 
 """Rank constraint"""
 
 
-"""def rank_cosntraint(model,i,j):
-    if i != j:
-        return model.r[i] - model.r[j] + model.x[i,j] * Nbcities - model.x[i,j] <= Nbcities - 2
+def VRP_rank_cosntraint(model,i,j):
+    if  j!= i:
+        return model.u[j] - model.u[i]  <= (1 - model.x[i,j]) * Capacity - model.d[j]
     else:
-        return model.r[i] - model.r[j] == 0 
+        return model.u[j] - model.u[i] == 0 
     
-TSPmodel.constraint3 = pyo.Constraint(TSPmodel.siteswithoutinitial,TSPmodel.siteswithoutinitial, rule = rank_cosntraint)"""
+VRPmodel.constraint3 = pyo.Constraint(VRPmodel.siteswithoutinitial,VRPmodel.siteswithoutinitial, rule = VRP_rank_cosntraint)
 
 
 """Resolution"""
 
-TSPmodel.pprint()
+VRPmodel.pprint()
     
 
 #Solves
 solver = pyo.SolverFactory('glpk')
-result = solver.solve(TSPmodel,tee = False)
+result = solver.solve(VRPmodel,tee = False)
 
 #Prints the results
 print(result)
 
-List = list(TSPmodel.x.keys())
+List = list(VRPmodel.x.keys())
 for i in List:
-    if TSPmodel.x[i]() != 0:
-        print(i,'--', TSPmodel.x[i]())
+    if VRPmodel.x[i]() != 0:
+        print(i,'--', VRPmodel.x[i]())
